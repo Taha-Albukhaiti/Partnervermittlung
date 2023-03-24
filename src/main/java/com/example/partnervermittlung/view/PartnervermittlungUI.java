@@ -61,8 +61,6 @@ public class PartnervermittlungUI {
                     ok = false;
                 }
             }
-
-
             //Interessen
             System.out.print("Geben Sie Ihre Interessen im Format Reisen, Lesen: ");
             String interessenString = br.readLine();
