@@ -140,7 +140,8 @@ public class Profil {
 
 	@Override
 	public String toString() {
-		return "Name: " + name + "\n" +
+		return  "ID: " + uuid.toString() + "\n" +
+				"Name: " + name + "\n" +
 				"Alter: " + alter + "\n" +
 				"Geschlecht: " + geschlecht + "\n" +
 				"Interessen: " + interessen + "\n" +

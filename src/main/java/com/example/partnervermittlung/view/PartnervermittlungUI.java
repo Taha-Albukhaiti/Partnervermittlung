@@ -91,7 +91,7 @@ public class PartnervermittlungUI {
 
             UUID uuid = UUID.randomUUID();        //ID fuer das Profil erzeugen
             return new Profil(uuid, name, geburtsdatum, geschlecht, interessenString,
-                    wohnort, suchWohnort, minAlter, maxAlter, suchInteressen, suchWohnort);			// ## to do ##
+                    wohnort, suchWohnort, minAlter, maxAlter, suchInteressen, suchWohnort);            // ## to do ##
         } catch (IOException e) {
             System.err.println("Fehler bei der Dateneingabe: " + e.getMessage());
             return null;
@@ -110,9 +110,9 @@ public class PartnervermittlungUI {
      */
     public static void zeigeMenue(Partnervermittlung pv) {
         boolean ok;                //Rueckgabewert von Lese-/Schreiboperationen
-        boolean ende = false;    //Abbruchbedingung fuer die Menueschleife
+        boolean ende = false;      //Abbruchbedingung fuer die Menueschleife
         int ziffer;                //fuer Menueauswahl
-        Profil profil;            //fuer die Zwischenspeicherug von erfassten Profilen
+        Profil profil;             //fuer die Zwischenspeicherug von erfassten Profilen
         String uuidString;
         UUID uuid;
 
@@ -141,7 +141,7 @@ public class PartnervermittlungUI {
                         profil = profilErfassen();
                         if (profil != null) {
                             pv.profilEintragen(profil);
-                            System.out.println("Ihre ID: " + profil.getUUID());
+                            System.out.println("Ihre ID: " + profil.getUUID().toString());
                             System.out.println("Erfassung erfolgreich.");
                         }
                         break;

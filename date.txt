@@ -1,0 +1,11 @@
+ID: 831410b3-48a4-4320-9a41-c67cea8dabd5
+Name: Taha
+Alter: 0
+Geschlecht: MAENNLICH
+Interessen: Lesen, Programmieren
+Wohnort: Lübeck
+Suche nach Geschlecht: Lübeck
+Mindestalter-Suche: 18
+Höchstalter-Suche: 30
+Suche nach Interessen: Lesen
+Suche nach Wohnort: Lübeck
