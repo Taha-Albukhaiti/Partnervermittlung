@@ -173,41 +173,18 @@ public class Partnervermittlung {
             while ((line = br.readLine()) != null) {
                 String[] data = line.split(": ");
                 switch (data[0].toLowerCase()) {
-                    case "id":
-                        id = UUID.fromString(data[1].trim());
-                        break;
-                    case "name":
-                        name = data[1].trim();
-                        break;
-                    case "alter":
-                        alter = LocalDate.ofEpochDay(Integer.parseInt(data[1].trim()));
-                        break;
-                    case "geschlecht":
-                        geschlecht = Geschlecht.valueOf(data[1].trim().toUpperCase());
-                        break;
-                    case "interessen":
-                        interessen = data[1].trim();
-                        break;
-                    case "wohnort":
-                        wohnort = data[1].trim();
-                        break;
-                    case "suche nach geschlecht":
-                        sucheNachGeschlecht = data[1].trim();
-                        break;
-                    case "mindestalter-suche":
-                        mindestalterSuche = Integer.parseInt(data[1].trim());
-                        break;
-                    case "höchstalter-suche":
-                        hoechstalterSuche = Integer.parseInt(data[1].trim());
-                        break;
-                    case "suche nach interessen":
-                        sucheNachInteressen = data[1].trim();
-                        break;
-                    case "suche nach wohnort":
-                        sucheNachWohnort = data[1].trim();
-                        break;
-                    default:
-                        throw new IllegalArgumentException("Ungültiges Datenformat: " + line);
+                    case "id" -> id = UUID.fromString(data[1].trim());
+                    case "name" -> name = data[1].trim();
+                    case "alter" -> alter = LocalDate.ofEpochDay(Integer.parseInt(data[1].trim()));
+                    case "geschlecht" -> geschlecht = Geschlecht.valueOf(data[1].trim().toUpperCase());
+                    case "interessen" -> interessen = data[1].trim();
+                    case "wohnort" -> wohnort = data[1].trim();
+                    case "suche nach geschlecht" -> sucheNachGeschlecht = data[1].trim();
+                    case "mindestalter-suche" -> mindestalterSuche = Integer.parseInt(data[1].trim());
+                    case "höchstalter-suche" -> hoechstalterSuche = Integer.parseInt(data[1].trim());
+                    case "suche nach interessen" -> sucheNachInteressen = data[1].trim();
+                    case "suche nach wohnort" -> sucheNachWohnort = data[1].trim();
+                    default -> throw new IllegalArgumentException("Ungültiges Datenformat: " + line);
                 }
                 Profil profil = new Profil(id, name, alter, geschlecht, interessen, wohnort,
                         sucheNachGeschlecht, mindestalterSuche, hoechstalterSuche, sucheNachInteressen, sucheNachWohnort);
@@ -219,7 +196,27 @@ public class Partnervermittlung {
         }
         return true;
     }
-
+    /*
+    public boolean profileLaden() {
+        profile.clear();
+        String line;
+        try (BufferedReader br = new BufferedReader(new FileReader(profileDatei))) {
+            while ((line = br.readLine()) != null) {
+                String[] data = line.split(": ");
+                Profil profil = new Profil(UUID.fromString(data[1].trim()), data[1].trim(),
+                        LocalDate.ofEpochDay(Integer.parseInt(data[1].trim())),
+                        Geschlecht.valueOf(data[1].trim().toUpperCase()),  data[1].trim(), data[1].trim(),
+                        data[1].trim(), Integer.parseInt(data[1].trim()),
+                        Integer.parseInt(data[1].trim()), data[1].trim(), data[1].trim());
+                profile.add(profil);
+            }
+        } catch (Exception e) {
+            System.err.println("Fehler beim Laden: " + e.getMessage());
+            return false;
+        }
+        return true;
+    }
+     */
 
     /**
      * Loescht alle Profile aus dem Datencontainer.
