@@ -8,11 +8,10 @@ public class Profil {
 	private UUID uuid;
 	private String name;
 	private LocalDate geburtsdatum;
-	private int alter;
 	private Geschlecht geschlecht;
 	private String interessen;
 	private String wohnort;
-	private String suchGeschlecht;
+	private Geschlecht suchGeschlecht;
 	private int minAlter;
 	private int maxAlter;
 	private String suchInteressen;
@@ -27,7 +26,7 @@ public class Profil {
 	}
 
 	public Profil(UUID uuid, String name, LocalDate geburtsdatum, Geschlecht geschlecht,
-				  String interessen, String wohnort, String suchGeschlecht, int minAlter,
+				  String interessen, String wohnort, Geschlecht suchGeschlecht, int minAlter,
 				  int maxAlter, String suchInteressen, String suchWohnort) {
 		this.uuid = uuid;
 		this.name = name;
@@ -66,14 +65,6 @@ public class Profil {
 		this.geburtsdatum = geburtsdatum;
 	}
 
-	public int getAlter() {
-		return alter;
-	}
-
-	public void setAlter(int alter) {
-		this.alter = alter;
-	}
-
 	public Geschlecht getGeschlecht() {
 		return geschlecht;
 	}
@@ -98,11 +89,11 @@ public class Profil {
 		this.wohnort = wohnort;
 	}
 
-	public String getSuchGeschlecht() {
+	public Geschlecht getSuchGeschlecht() {
 		return suchGeschlecht;
 	}
 
-	public void setSuchGeschlecht(String suchGeschlecht) {
+	public void setSuchGeschlecht(Geschlecht suchGeschlecht) {
 		this.suchGeschlecht = suchGeschlecht;
 	}
 
@@ -142,7 +133,7 @@ public class Profil {
 	public String toString() {
 		return  "ID: " + uuid.toString() + "\n" +
 				"Name: " + name + "\n" +
-				"Alter: " + alter + "\n" +
+				"Alter: " + geburtsdatum + "\n" +
 				"Geschlecht: " + geschlecht + "\n" +
 				"Interessen: " + interessen + "\n" +
 				"Wohnort: " + wohnort + "\n" +

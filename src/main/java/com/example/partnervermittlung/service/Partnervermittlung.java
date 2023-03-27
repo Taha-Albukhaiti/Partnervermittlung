@@ -5,8 +5,8 @@ import com.example.partnervermittlung.model.Profil;
 
 import java.io.*;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,6 +21,11 @@ public class Partnervermittlung {
     private int zaehler = 0;                            //zaehler, um neue Profile an der richtigen Stelle abzulegen
     private String profileDatei = "date.txt";
 
+    public Partnervermittlung() {
+        profile.clear();
+        profileLaden();
+    }
+
     /**
      * Nimmt ein Profil entgegen und traegt es in den Profil-Container ein.
      *
@@ -29,6 +34,7 @@ public class Partnervermittlung {
     public void profilEintragen(Profil profil) {
         if (profil != null) {
             profile.add(profil);
+
         } else {
             System.out.println("Es gibt keinen Platz mehr für weitere Profile.");
         }
@@ -79,8 +85,8 @@ public class Partnervermittlung {
     public boolean profilLoeschenPerNameUndGeburtsdatum(String name, LocalDate geburtsdatum) {
         //Profile maximal bis zum Ende durchlaufen
         for (int i = 0; i < profile.size(); i++) {
-            if ((profile.get(i) != null) && (profile.get(i).getName().compareTo(name) == 0)
-                    && (profile.get(i).getGeburtsdatum().compareTo(geburtsdatum) == 0)) {    //gefunden
+            if ((profile.get(i) != null) && (profile.get(i).getName().equals(name))
+                    && (profile.get(i).getGeburtsdatum().equals(geburtsdatum))) {    //gefunden
                 profile.remove(i);    //loeschen
                 return true;
             }
@@ -103,44 +109,37 @@ public class Partnervermittlung {
         int i = 1;
         for (Profil profil : profile) {
             if (profil != null) {
-                profileText += (i++) + ". " + profil.toString() + "\n";
+                profileText += (i++) + ". " + profil + "\n";
             }
         } //for
         return profileText.equals("") ? null : profileText;
     }
 
+    public boolean profilExistiert(String name, LocalDate geburtsdatum) {
+        return profile.stream()
+                .anyMatch(profil -> profil.getName().equals(name) && profil.getGeburtsdatum().equals(geburtsdatum));
+    }
 
     /**
      * Speichert die Profile in einer Datei.
      *
      * @return true, falls Speicherung erfolgreich, false sonst
      */
-  /*  public boolean profileSpeichern() {
-        BufferedWriter bw = null;
-        try {
-            bw = new BufferedWriter(new FileWriter(profileDatei));
-            for (Profil profil : profile) bw.write(profil.toString());
-        } catch (IOException e) {
-            e.getStackTrace();
-            return false;
-        } finally {
-            try {
-                assert bw != null;
-                bw.flush();
-                bw.close();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        return true;
-    }
-
-   */
     public boolean profileSpeichern() {
-        //Wir verwenden eine try-with-resources-Anweisung, um das BufferedReader-Objekt automatisch zu schließen.
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(profileDatei))) {
             for (Profil profil : profile) {
-                writer.write(profil.toString());
+                writer.write(profil.getUUID() + "\n");
+                writer.write(profil.getName() + "\n");
+                writer.write(profil.getGeburtsdatum() + "\n");
+                writer.write(profil.getGeschlecht() + "\n");
+                writer.write(profil.getInteressen() + "\n");
+                writer.write(profil.getWohnort() + "\n");
+                writer.write(profil.getSuchGeschlecht() + "\n");
+                writer.write(profil.getMinAlter() + "\n");
+                writer.write(profil.getMaxAlter() + "\n");
+                writer.write(profil.getSuchInteressen() + "\n");
+                writer.write(profil.getSuchWohnort());
+                writer.write("\n");
             }
             return true;
         } catch (IOException e) {
@@ -149,22 +148,37 @@ public class Partnervermittlung {
         }
     }
 
-
     /**
      * Laedt Profile aus einer Datei.
      *
      * @return true, falls Laden erfolgreich, false sonst
      */
     public boolean profileLaden() {
-        profile.clear();
+        try (BufferedReader br = new BufferedReader(new FileReader(profileDatei))) {
+            while (br.ready()) {
+                profile.add(new Profil(UUID.fromString(br.readLine()), br.readLine(),
+                        LocalDate.parse(br.readLine(), DateTimeFormatter.ofPattern("yyyy-MM-dd")),
+                        Geschlecht.valueOf(br.readLine().toUpperCase()), br.readLine(), br.readLine(),
+                        Geschlecht.valueOf(br.readLine().toUpperCase()), Integer.parseInt(br.readLine()),
+                        Integer.parseInt(br.readLine()), br.readLine(), br.readLine()));
+            }
+            return true;
+        } catch (Exception e) {
+            System.err.println("Fehler beim Laden: " + e.getMessage());
+            return false;
+        }
+    }
+
+
+    /*public boolean profileLaden() {
         String line;
         UUID id = null;
         String name = null;
-        LocalDate alter = null;
+        LocalDate geburstdatum = null;
         Geschlecht geschlecht = null;
         String interessen = null;
         String wohnort = null;
-        String sucheNachGeschlecht = null;
+        Geschlecht sucheNachGeschlecht = null;
         int mindestalterSuche = 0;
         int hoechstalterSuche = 0;
         String sucheNachInteressen = null;
@@ -175,18 +189,19 @@ public class Partnervermittlung {
                 switch (data[0].toLowerCase()) {
                     case "id" -> id = UUID.fromString(data[1].trim());
                     case "name" -> name = data[1].trim();
-                    case "alter" -> alter = LocalDate.ofEpochDay(Integer.parseInt(data[1].trim()));
+                    case "alter" -> geburstdatum = LocalDate.parse(data[1].trim());
                     case "geschlecht" -> geschlecht = Geschlecht.valueOf(data[1].trim().toUpperCase());
                     case "interessen" -> interessen = data[1].trim();
                     case "wohnort" -> wohnort = data[1].trim();
-                    case "suche nach geschlecht" -> sucheNachGeschlecht = data[1].trim();
+                    case "suche nach geschlecht" ->
+                            sucheNachGeschlecht = Geschlecht.valueOf(data[1].trim().toUpperCase());
                     case "mindestalter-suche" -> mindestalterSuche = Integer.parseInt(data[1].trim());
                     case "höchstalter-suche" -> hoechstalterSuche = Integer.parseInt(data[1].trim());
                     case "suche nach interessen" -> sucheNachInteressen = data[1].trim();
                     case "suche nach wohnort" -> sucheNachWohnort = data[1].trim();
                     default -> throw new IllegalArgumentException("Ungültiges Datenformat: " + line);
                 }
-                Profil profil = new Profil(id, name, alter, geschlecht, interessen, wohnort,
+                Profil profil = new Profil(id, name, geburstdatum, geschlecht, interessen, wohnort,
                         sucheNachGeschlecht, mindestalterSuche, hoechstalterSuche, sucheNachInteressen, sucheNachWohnort);
                 profile.add(profil);
             }
@@ -196,26 +211,7 @@ public class Partnervermittlung {
         }
         return true;
     }
-    /*
-    public boolean profileLaden() {
-        profile.clear();
-        String line;
-        try (BufferedReader br = new BufferedReader(new FileReader(profileDatei))) {
-            while ((line = br.readLine()) != null) {
-                String[] data = line.split(": ");
-                Profil profil = new Profil(UUID.fromString(data[1].trim()), data[1].trim(),
-                        LocalDate.ofEpochDay(Integer.parseInt(data[1].trim())),
-                        Geschlecht.valueOf(data[1].trim().toUpperCase()),  data[1].trim(), data[1].trim(),
-                        data[1].trim(), Integer.parseInt(data[1].trim()),
-                        Integer.parseInt(data[1].trim()), data[1].trim(), data[1].trim());
-                profile.add(profil);
-            }
-        } catch (Exception e) {
-            System.err.println("Fehler beim Laden: " + e.getMessage());
-            return false;
-        }
-        return true;
-    }
+
      */
 
     /**

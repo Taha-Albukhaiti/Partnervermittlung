@@ -18,6 +18,8 @@ import java.util.UUID;
  * Konsolen-UI fuer Partnervermittlung
  */
 public class PartnervermittlungUI {
+    //Service-Objekt erzeugen
+    static Partnervermittlung pv = new Partnervermittlung();
 
     /**
      * Liest Profildaten von der Standardeingabe ein, speichert diese in einem
@@ -34,33 +36,27 @@ public class PartnervermittlungUI {
             System.out.println("wie ist Ihr Name? ");
             String name = br.readLine();
 
-            System.out.println("Bitte geben Sie Ihr Geburtsdatum im Format TT.MM.JJJJ ein: ");
+            System.out.println("Bitte geben Sie Ihr Geburtsdatum im Format TT-MM-JJJJ ein: ");
             String geburtsdatumString = br.readLine();
             // Geburtsdatum-String in ein Datum-Objekt konvertieren
-            LocalDate geburtsdatum = LocalDate.parse(geburtsdatumString, DateTimeFormatter.ofPattern("dd.MM.yyyy"));
-            int alter = geburtsdatum.getYear();
+            LocalDate geburtsdatum = LocalDate.parse(geburtsdatumString, DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+
+            // Abfragen falls Profil schon gibt
+            if (pv.profilExistiert(name, geburtsdatum)) {
+                System.out.println("Dieser Profile existiert schon!!");
+                return null;
+            }
 
             // geschlecht abfragen
-            boolean ok = true;
             Geschlecht geschlecht = null;
-            while (ok) {
-                System.out.print("Bitte geben Sie Ihr Geschlecht ein (m/w): ");
-                String geschlechtString = br.readLine();
-                switch (geschlechtString.toUpperCase()) {
-                    case "M":
-                        geschlecht = Geschlecht.MAENNLICH;
-                        break;
-                    case "W":
-                        geschlecht = Geschlecht.WEIBLICH;
-                        break;
-                    default:
-                        System.out.println("Ungültiges Geschlecht! Nochmal");
-                        break;
-                }
-                if (geschlecht != null) {
-                    ok = false;
-                }
+            System.out.print("Bitte geben Sie Ihr Geschlecht ein (m/w): ");
+            String geschlechtString = br.readLine();
+            if (geschlechtString.equalsIgnoreCase("m")) {
+                geschlecht = Geschlecht.MAENNLICH;
+            } else if (geschlechtString.equalsIgnoreCase("w")) {
+                geschlecht = Geschlecht.WEIBLICH;
             }
+
             //Interessen
             System.out.print("Geben Sie Ihre Interessen im Format Reisen, Lesen: ");
             String interessenString = br.readLine();
@@ -70,8 +66,14 @@ public class PartnervermittlungUI {
             String wohnort = br.readLine();
 
             // Geschlecht für die Suche abfragen
+            Geschlecht geschlechtSuche = null;
             System.out.print("Bitte geben Sie das Geschlecht ein, nach dem Sie suchen (m/w): ");
             String suchGeschlecht = br.readLine();
+            if (suchGeschlecht.equalsIgnoreCase("m")) {
+                geschlechtSuche = Geschlecht.MAENNLICH;
+            } else if (suchGeschlecht.equalsIgnoreCase("w")) {
+                geschlechtSuche = Geschlecht.WEIBLICH;
+            }
 
             // Mindestalter für die Suche abfragen
             System.out.print("Bitte geben Sie das Mindestalter für die Suche ein: ");
@@ -91,7 +93,7 @@ public class PartnervermittlungUI {
 
             UUID uuid = UUID.randomUUID();        //ID fuer das Profil erzeugen
             return new Profil(uuid, name, geburtsdatum, geschlecht, interessenString,
-                    wohnort, suchWohnort, minAlter, maxAlter, suchInteressen, suchWohnort);            // ## to do ##
+                    wohnort, geschlechtSuche, minAlter, maxAlter, suchInteressen, suchWohnort);            // ## to do ##
         } catch (IOException e) {
             System.err.println("Fehler bei der Dateneingabe: " + e.getMessage());
             return null;
@@ -128,8 +130,8 @@ public class PartnervermittlungUI {
             System.out.println("(2) Profil suchen");
             System.out.println("(3) Profil loeschen");
             System.out.println("(4) Profile ausgeben");
-            System.out.println("(5) Profile speichern");
-            System.out.println("(6) Profile laden");
+            //System.out.println("(5) Profile speichern");
+            //System.out.println("(6) Profile laden");
             System.out.println("(7) Programm beenden");
 
             try {
@@ -141,8 +143,13 @@ public class PartnervermittlungUI {
                         profil = profilErfassen();
                         if (profil != null) {
                             pv.profilEintragen(profil);
-                            System.out.println("Ihre ID: " + profil.getUUID().toString());
                             System.out.println("Erfassung erfolgreich.");
+                            System.out.println("Ihre ID: " + profil.getUUID().toString());
+                            if (pv.profileSpeichern()) {
+                                System.out.println("Speicherung erfolgreich.");
+                            } else {
+                                System.out.println("Speicherung erfolglos.");
+                            }
                         }
                         break;
 
@@ -202,25 +209,6 @@ public class PartnervermittlungUI {
                         }
                         break;
 
-                    case 5: //Profile speichern
-                        ok = pv.profileSpeichern();
-                        if (ok) {
-                            System.out.println("Speicherung erfolgreich.");
-                        } else {
-                            System.out.println("Fehler beim Speichern.");
-                        }
-                        break;
-
-                    case 6: //Profile laden
-                        pv.alleProfileLoeschen();        //zunaechst Altdaten entfernen
-                        ok = pv.profileLaden();
-                        if (ok) {
-                            System.out.println("Laden erfolgreich.");
-                        } else {
-                            System.out.println("Fehler beim Laden.");
-                        }
-                        break;
-
                     case 7:
                         System.out.println("Programm wird beendet.");
                         ende = true;
@@ -243,8 +231,7 @@ public class PartnervermittlungUI {
      * @param args Kommandozeilenparameter, derzeit nicht verwendet
      */
     public static void main(String[] args) {
-        //Service-Objekt erzeugen
-        Partnervermittlung pv = new Partnervermittlung();
+
 
         //Menue zur User-Interaktion mit der Partnervermittlung anzeigen
         zeigeMenue(pv);
