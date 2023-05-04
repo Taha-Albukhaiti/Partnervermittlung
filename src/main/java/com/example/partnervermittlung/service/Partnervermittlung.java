@@ -2,32 +2,32 @@ package com.example.partnervermittlung.service;
 
 import com.example.partnervermittlung.model.Geschlecht;
 import com.example.partnervermittlung.model.Profil;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 import java.io.*;
 import java.time.LocalDate;
+import java.time.Period;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 
 /**
  * Service-Klasse Partnervermittlung zur Verwaltung und zum Matching von Profilen
  */
 public class Partnervermittlung {
-
-    //private Profil[] profile = new Profil[MAX_PROFILE];
-    private List<Profil> profile = new ArrayList<>();   //ArrayList zum Speichern der Profile
-    private int zaehler = 0;                            //zaehler, um neue Profile an der richtigen Stelle abzulegen
+    //ArrayList zum Verwalten der Profile, zur Verwendung mit JavaFX als ObservableList
+    private ObservableList<Profil> profile = FXCollections.observableArrayList();
+    //  private List<Profil> profile = new LinkedList<>();   //ArrayList zum Speichern der Profile
     private String profileDatei = "date.txt";
 
     public Partnervermittlung() {
-        profile.clear();
         profileLaden();
     }
 
     /**
-     * Nimmt ein Profil entgegen und traegt es in den Profil-Container ein.
+     * Nimmt ein Profil entgegen und tragt es in den Profil-Container ein.
      *
      * @param profil Das zu speichernde Profil.
      */
@@ -42,10 +42,10 @@ public class Partnervermittlung {
 
 
     /**
-     * Ermittelt das Profil mit der uebergebenen UUID, sofern vorhanden.
+     * Ermittelt das Profil mit der übergebenen UUID, sofern vorhanden.
      *
      * @param uuid Die UUID des gesuchten Profils.
-     * @return Das Profil mit der uebergebenen UUID. null, falls UUID nicht existent.
+     * @return Das Profil mit der übergebenen UUID. null, falls UUID nicht existent.
      */
     public Profil profilSuchen(UUID uuid) {
         //Profile maximal bis zum Ende durchlaufen
@@ -57,6 +57,22 @@ public class Partnervermittlung {
         return null;    //nicht gefunden
     }
 
+    /**
+     * Profile ermitteln mit bestimmten Eigenschaften
+     *
+     * @param wohnort    wohnort, nach dem gesucht wird
+     * @param geschlecht geschlecht, nach dem gesucht wird
+     * @return Die Profile, die mit den gegebenen Eigenschaften übereinstimmen
+     */
+    public List<Profil> filterProfiles(String wohnort, Geschlecht geschlecht) {
+        if (wohnort == null | geschlecht == null) {
+            throw new IllegalArgumentException("Predicate must not be null");
+        }
+        return profile.stream()
+                .filter(profil -> profil.getGeschlecht().equals(geschlecht) && profil.getWohnort().equals(wohnort))
+                .collect(Collectors.toList());
+    }
+
 
     /**
      * Loescht das Profil mit der uebergebenen UUID, sofern vorhanden.
@@ -66,13 +82,15 @@ public class Partnervermittlung {
      */
     public boolean profilLoeschen(UUID uuid) {
         //Profile maximal bis zum Ende durchlaufen
-        for (int i = 0; i < profile.size(); i++) {
-            if (profile.get(i) != null && profile.get(i).getUUID().compareTo(uuid) == 0) {    //gefunden
-                profile.remove(i);    //loeschen
-                return true;
-            }
-        } //for
-        return false;    //nichts geloescht
+        Optional<Profil> profil = profile.stream()
+                .filter(profil1 -> profil1.getUUID().equals(uuid))
+                .findFirst();
+        if (profil.isPresent()) {
+            profile.remove(profil.get());
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -83,15 +101,15 @@ public class Partnervermittlung {
      * @return true, falls Loeschen erfolgreich, sonst false.
      */
     public boolean profilLoeschenPerNameUndGeburtsdatum(String name, LocalDate geburtsdatum) {
-        //Profile maximal bis zum Ende durchlaufen
-        for (int i = 0; i < profile.size(); i++) {
-            if ((profile.get(i) != null) && (profile.get(i).getName().equals(name))
-                    && (profile.get(i).getGeburtsdatum().equals(geburtsdatum))) {    //gefunden
-                profile.remove(i);    //loeschen
-                return true;
-            }
-        } //for
-        return false;    //nichts geloescht
+        Optional<Profil> profil = profile.stream()
+                .filter(p -> p.getName().equals(name) && p.getGeburtsdatum().equals(geburtsdatum))
+                .findFirst();
+        if (profil.isPresent()) {
+            profile.remove(profil.get());
+            return true;
+        } else {
+            return false;
+        }
     }
 
 
@@ -101,20 +119,59 @@ public class Partnervermittlung {
      * @return Die Profile als String. null, falls keine Profile vorhanden
      */
     public String gibProfileAlsString() {
-
         String profileText = "";
-
         //Jedes Profil zum Rueckgabestring hinzufuegen
         //alternative Implementierung der Methode:
         int i = 1;
         for (Profil profil : profile) {
             if (profil != null) {
-                profileText += (i++) + ". " + profil + "\n";
+                profileText += (i++) + ": \n" + profil + "\n";
             }
         } //for
+
         return profileText.equals("") ? null : profileText;
     }
 
+    /**
+     * Gibt eine Liste mit allen Profilen als String zurueck,
+     * die gemäß der den angegebenen Minalter und Maxalter sowie gesuchtes Geschlecht.
+     *
+     * @return Die Profile als String. null, falls keine Profile vorhanden
+     */
+    public String gibProfileFuerMichAlsString(UUID uuid) {
+        String profileText = "";
+        int min = 18;
+        int max = 100;
+        Geschlecht ges = null;
+        for (Profil profil : profile) {
+            if (profil.getUUID().equals(uuid)) {
+                min = profil.getMinAlter();
+                max = profil.getMaxAlter();
+                ges = profil.getSuchGeschlecht();
+            }
+        }
+        int finalMin = min;
+        int finalMax = max;
+        Geschlecht finalGes = ges;
+        List<Profil> profilList = profile.stream()
+                .filter(profil -> profil.getGeschlecht() == finalGes && (Period.between(profil.getGeburtsdatum(), LocalDate.now()).getYears() >= finalMin)
+                        && (Period.between(profil.getGeburtsdatum(), LocalDate.now()).getYears() <= finalMax))
+                .toList();
+
+        profileText += profilList.stream().map(profil -> profil.getName() + "\n" + profil.getGeburtsdatum()
+                        + "\n" + profil.getInteressen() + "\n" + profil.getGeschlecht()
+                        + "\n" + profil.getWohnort() + "\n")
+                .collect(Collectors.joining("\n"));
+        return profileText.equals("") ? null : profileText;
+    }
+
+    /**
+     * Prüft, ob überhaupt der gesuchten Profile existiert.
+     *
+     * @param name
+     * @param geburtsdatum
+     * @return true falls es dieser Profile gibt, sonst false
+     */
     public boolean profilExistiert(String name, LocalDate geburtsdatum) {
         return profile.stream()
                 .anyMatch(profil -> profil.getName().equals(name) && profil.getGeburtsdatum().equals(geburtsdatum));
@@ -150,10 +207,9 @@ public class Partnervermittlung {
 
     /**
      * Laedt Profile aus einer Datei.
-     *
-     * @return true, falls Laden erfolgreich, false sonst
      */
-    public boolean profileLaden() {
+    public void profileLaden() {
+        alleProfileLoeschen();
         try (BufferedReader br = new BufferedReader(new FileReader(profileDatei))) {
             while (br.ready()) {
                 profile.add(new Profil(UUID.fromString(br.readLine()), br.readLine(),
@@ -162,15 +218,29 @@ public class Partnervermittlung {
                         Geschlecht.valueOf(br.readLine().toUpperCase()), Integer.parseInt(br.readLine()),
                         Integer.parseInt(br.readLine()), br.readLine(), br.readLine()));
             }
-            return true;
         } catch (Exception e) {
             System.err.println("Fehler beim Laden: " + e.getMessage());
-            return false;
         }
     }
 
+    /*
+    private Profil createProfile(String[] values) {
+        return new Profil(
+                UUID.fromString(values[0]),
+                values[1],
+                LocalDate.parse(values[2], DateTimeFormatter.ofPattern("yyyy-MM-dd")),
+                Geschlecht.valueOf(values[3].toUpperCase()),
+                values[4],
+                values[5],
+                Geschlecht.valueOf(values[6].toUpperCase()),
+                Integer.parseInt(values[7]),
+                Integer.parseInt(values[8]),
+                values[9],
+                values[10]
+        );
+    }
 
-    /*public boolean profileLaden() {
+    public boolean profileLaden() {
         String line;
         UUID id = null;
         String name = null;
@@ -238,6 +308,15 @@ public class Partnervermittlung {
             dateiInfos += "Datei nicht gefunden.\n";
         }
         return dateiInfos;
+    }
+
+    /**
+     * Gibt die aktuelle Profilliste zurueck.
+     *
+     * @return Die aktuelle PertnerListe.
+     */
+    public ObservableList<Profil> getProfile() {
+        return profile;
     }
 
 

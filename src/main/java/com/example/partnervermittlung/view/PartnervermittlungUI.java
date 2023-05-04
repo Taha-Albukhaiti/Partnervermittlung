@@ -9,8 +9,8 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Scanner;
-import java.util.Stack;
 import java.util.UUID;
 
 
@@ -41,20 +41,23 @@ public class PartnervermittlungUI {
             // Geburtsdatum-String in ein Datum-Objekt konvertieren
             LocalDate geburtsdatum = LocalDate.parse(geburtsdatumString, DateTimeFormatter.ofPattern("dd-MM-yyyy"));
 
-            // Abfragen falls Profil schon gibt
+            // Abfragen, falls Profil schon gibt
             if (pv.profilExistiert(name, geburtsdatum)) {
                 System.out.println("Dieser Profile existiert schon!!");
                 return null;
             }
-
+            // Geschlecht für die Suche abfragen
+            Geschlecht geschlechtSuche = null;
             // geschlecht abfragen
             Geschlecht geschlecht = null;
             System.out.print("Bitte geben Sie Ihr Geschlecht ein (m/w): ");
             String geschlechtString = br.readLine();
             if (geschlechtString.equalsIgnoreCase("m")) {
                 geschlecht = Geschlecht.MAENNLICH;
+                geschlechtSuche = Geschlecht.WEIBLICH;
             } else if (geschlechtString.equalsIgnoreCase("w")) {
                 geschlecht = Geschlecht.WEIBLICH;
+                geschlechtSuche = Geschlecht.MAENNLICH;
             }
 
             //Interessen
@@ -65,19 +68,13 @@ public class PartnervermittlungUI {
             System.out.print("Bitte geben Sie Ihren Wohnort ein: ");
             String wohnort = br.readLine();
 
-            // Geschlecht für die Suche abfragen
-            Geschlecht geschlechtSuche = null;
-            System.out.print("Bitte geben Sie das Geschlecht ein, nach dem Sie suchen (m/w): ");
-            String suchGeschlecht = br.readLine();
-            if (suchGeschlecht.equalsIgnoreCase("m")) {
-                geschlechtSuche = Geschlecht.MAENNLICH;
-            } else if (suchGeschlecht.equalsIgnoreCase("w")) {
-                geschlechtSuche = Geschlecht.WEIBLICH;
-            }
-
             // Mindestalter für die Suche abfragen
-            System.out.print("Bitte geben Sie das Mindestalter für die Suche ein: ");
-            int minAlter = Integer.parseInt(br.readLine());
+            int minAlter;
+            do {
+                System.out.print("Bitte geben Sie das Mindestalter für die Suche ein: ");
+                minAlter = Integer.parseInt(br.readLine());
+            } while (minAlter < 18);
+
 
             // Höchstalter für die Suche abfragen
             System.out.print("Bitte geben Sie das Höchstalter für die Suche ein: ");
@@ -117,6 +114,8 @@ public class PartnervermittlungUI {
         Profil profil;             //fuer die Zwischenspeicherug von erfassten Profilen
         String uuidString;
         UUID uuid;
+        String wohnort;
+        String geschlecht;
 
         if (pv == null) return;    //ohne Service-Objekt geht nichts
 
@@ -130,8 +129,8 @@ public class PartnervermittlungUI {
             System.out.println("(2) Profil suchen");
             System.out.println("(3) Profil loeschen");
             System.out.println("(4) Profile ausgeben");
-            //System.out.println("(5) Profile speichern");
-            //System.out.println("(6) Profile laden");
+            System.out.println("(5) Profile suchen mit bestimmten Eigenschaften");
+            System.out.println("(6) Für mich Profile zeigen");
             System.out.println("(7) Programm beenden");
 
             try {
@@ -200,12 +199,42 @@ public class PartnervermittlungUI {
 
                         break;
 
-                    case 4: //Liste aller Profile ausgeben
+                    case 4: //Liste aller Profile ausgeben, die mit min und max Alter übereinstimmen.
                         String profileAlsString = pv.gibProfileAlsString();
                         if (profileAlsString != null) {
                             System.out.println(profileAlsString);
                         } else {
                             System.out.println("Keine Profile gefunden.");
+                        }
+                        break;
+
+                    case 5: //Liste aller gefilterte Profile ausgeben
+                        System.out.println("Geben Sie den Wohnort: ");
+                        wohnort = sc.nextLine();
+                        System.out.println("Geben Sie das Geschlecht: ");
+                        geschlecht = sc.nextLine();
+                        if (geschlecht.equalsIgnoreCase("m")) {
+                            geschlecht = String.valueOf(Geschlecht.MAENNLICH);
+                        } else if (geschlecht.equalsIgnoreCase("w")) {
+                            geschlecht = String.valueOf(Geschlecht.WEIBLICH);
+                        }
+
+                        List<Profil> olderThan30 = pv.filterProfiles(wohnort, Geschlecht.valueOf(geschlecht));
+                        olderThan30.forEach(System.out::println);
+                        break;
+
+                    case 6:
+                        System.out.println("Profil-UUID (nur Return -> zurueck): ");
+
+                        //uuidString = br.readLine();
+                        uuidString = sc.nextLine();
+                        if (uuidString.equals("")) break;    //zurueck zum Menue
+                        try {
+                            uuid = UUID.fromString(uuidString);
+                            String s = pv.gibProfileFuerMichAlsString(uuid);
+                            System.out.println(s);
+                        } catch (IllegalArgumentException e) {
+                            System.err.println("Fehler: " + e.getMessage());
                         }
                         break;
 
@@ -231,8 +260,6 @@ public class PartnervermittlungUI {
      * @param args Kommandozeilenparameter, derzeit nicht verwendet
      */
     public static void main(String[] args) {
-
-
         //Menue zur User-Interaktion mit der Partnervermittlung anzeigen
         zeigeMenue(pv);
     }
