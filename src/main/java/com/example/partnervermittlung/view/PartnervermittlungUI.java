@@ -143,7 +143,7 @@ public class PartnervermittlungUI {
                         if (profil != null) {
                             pv.profilEintragen(profil);
                             System.out.println("Erfassung erfolgreich.");
-                            System.out.println("Ihre ID: " + profil.getUUID().toString());
+                            System.out.println("Ihre ID: " + profil.uuidStringProperty().get());
                             if (pv.profileSpeichern()) {
                                 System.out.println("Speicherung erfolgreich.");
                             } else {

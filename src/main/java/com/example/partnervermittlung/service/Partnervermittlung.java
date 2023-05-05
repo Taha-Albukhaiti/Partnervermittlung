@@ -34,7 +34,6 @@ public class Partnervermittlung {
     public void profilEintragen(Profil profil) {
         if (profil != null) {
             profile.add(profil);
-
         } else {
             System.out.println("Es gibt keinen Platz mehr für weitere Profile.");
         }
@@ -48,13 +47,10 @@ public class Partnervermittlung {
      * @return Das Profil mit der übergebenen UUID. null, falls UUID nicht existent.
      */
     public Profil profilSuchen(UUID uuid) {
-        //Profile maximal bis zum Ende durchlaufen
-        for (Profil profil : profile) {
-            if (profil != null && profil.getUUID().compareTo(uuid) == 0) {    //gefunden
-                return profil;                                                //Profil zurueckgeben
-            }
-        } //for
-        return null;    //nicht gefunden
+        return profile.stream()
+                .filter(profil -> profil != null && profil.uuidStringProperty().get().compareTo(uuid.toString()) == 0)
+                .findFirst()
+                .orElse(null);
     }
 
     /**
@@ -69,7 +65,9 @@ public class Partnervermittlung {
             throw new IllegalArgumentException("Predicate must not be null");
         }
         return profile.stream()
-                .filter(profil -> profil.getGeschlecht().equals(geschlecht) && profil.getWohnort().equals(wohnort))
+                .filter(profil -> profil.getGeschlecht()
+                        .equals(geschlecht) && profil.wohnortProperty()
+                        .get().equals(wohnort))
                 .collect(Collectors.toList());
     }
 
@@ -83,7 +81,7 @@ public class Partnervermittlung {
     public boolean profilLoeschen(UUID uuid) {
         //Profile maximal bis zum Ende durchlaufen
         Optional<Profil> profil = profile.stream()
-                .filter(profil1 -> profil1.getUUID().equals(uuid))
+                .filter(profil1 -> profil1.uuidStringProperty().get().equals(uuid.toString()))
                 .findFirst();
         if (profil.isPresent()) {
             profile.remove(profil.get());
@@ -102,7 +100,7 @@ public class Partnervermittlung {
      */
     public boolean profilLoeschenPerNameUndGeburtsdatum(String name, LocalDate geburtsdatum) {
         Optional<Profil> profil = profile.stream()
-                .filter(p -> p.getName().equals(name) && p.getGeburtsdatum().equals(geburtsdatum))
+                .filter(p -> p.nameProperty().get().equals(name) && p.getGeburtsdatum().equals(geburtsdatum))
                 .findFirst();
         if (profil.isPresent()) {
             profile.remove(profil.get());
@@ -144,9 +142,9 @@ public class Partnervermittlung {
         int max = 100;
         Geschlecht ges = null;
         for (Profil profil : profile) {
-            if (profil.getUUID().equals(uuid)) {
-                min = profil.getMinAlter();
-                max = profil.getMaxAlter();
+            if (profil.uuidStringProperty().get().equals(uuid.toString())) {
+                min = profil.minAlterProperty().get();
+                max = profil.maxAlterProperty().get();
                 ges = profil.getSuchGeschlecht();
             }
         }
@@ -158,9 +156,9 @@ public class Partnervermittlung {
                         && (Period.between(profil.getGeburtsdatum(), LocalDate.now()).getYears() <= finalMax))
                 .toList();
 
-        profileText += profilList.stream().map(profil -> profil.getName() + "\n" + profil.getGeburtsdatum()
-                        + "\n" + profil.getInteressen() + "\n" + profil.getGeschlecht()
-                        + "\n" + profil.getWohnort() + "\n")
+        profileText += profilList.stream().map(profil -> profil.nameProperty().get() + "\n" + profil.getGeburtsdatum()
+                        + "\n" + profil.interessenProperty().get() + "\n" + profil.getGeschlecht()
+                        + "\n" + profil.wohnortProperty().get() + "\n")
                 .collect(Collectors.joining("\n"));
         return profileText.equals("") ? null : profileText;
     }
@@ -174,7 +172,7 @@ public class Partnervermittlung {
      */
     public boolean profilExistiert(String name, LocalDate geburtsdatum) {
         return profile.stream()
-                .anyMatch(profil -> profil.getName().equals(name) && profil.getGeburtsdatum().equals(geburtsdatum));
+                .anyMatch(profil -> profil.nameProperty().get().equals(name) && profil.getGeburtsdatum().equals(geburtsdatum));
     }
 
     /**
@@ -185,17 +183,17 @@ public class Partnervermittlung {
     public boolean profileSpeichern() {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(profileDatei))) {
             for (Profil profil : profile) {
-                writer.write(profil.getUUID() + "\n");
-                writer.write(profil.getName() + "\n");
+                writer.write(profil.uuidStringProperty().get() + "\n");
+                writer.write(profil.nameProperty().get() + "\n");
                 writer.write(profil.getGeburtsdatum() + "\n");
                 writer.write(profil.getGeschlecht() + "\n");
-                writer.write(profil.getInteressen() + "\n");
-                writer.write(profil.getWohnort() + "\n");
+                writer.write(profil.interessenProperty().get() + "\n");
+                writer.write(profil.wohnortProperty().get() + "\n");
                 writer.write(profil.getSuchGeschlecht() + "\n");
-                writer.write(profil.getMinAlter() + "\n");
-                writer.write(profil.getMaxAlter() + "\n");
-                writer.write(profil.getSuchInteressen() + "\n");
-                writer.write(profil.getSuchWohnort());
+                writer.write(profil.minAlterProperty().get() + "\n");
+                writer.write(profil.maxAlterProperty().get() + "\n");
+                writer.write(profil.suchInteressenProperty().get() + "\n");
+                writer.write(profil.suchWohnortProperty().get());
                 writer.write("\n");
             }
             return true;
@@ -222,7 +220,6 @@ public class Partnervermittlung {
             System.err.println("Fehler beim Laden: " + e.getMessage());
         }
     }
-
     /*
     private Profil createProfile(String[] values) {
         return new Profil(

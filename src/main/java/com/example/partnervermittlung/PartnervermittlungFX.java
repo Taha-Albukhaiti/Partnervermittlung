@@ -51,4 +51,11 @@ public class PartnervermittlungFX extends Application {
     public Partnervermittlung getPartnerverimttlungsManager() {
         return pv;
     }
+    /**
+     * Liefert die Primary Stage (z. B. an einen Controller, damit dieser neue Fenster oeffnen kann etc.)
+     * @return die Primary Stage
+     */
+    public Stage getPrimaryStage() {
+        return stage;
+    }
 }
