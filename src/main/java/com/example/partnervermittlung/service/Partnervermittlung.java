@@ -20,7 +20,7 @@ public class Partnervermittlung {
     //ArrayList zum Verwalten der Profile, zur Verwendung mit JavaFX als ObservableList
     private ObservableList<Profil> profile = FXCollections.observableArrayList();
     //  private List<Profil> profile = new LinkedList<>();   //ArrayList zum Speichern der Profile
-    private String profileDatei = "date.txt";
+    private final String PROFILE_DATEI = "date.txt";
 
     public Partnervermittlung() {
         profileLaden();
@@ -47,10 +47,10 @@ public class Partnervermittlung {
      * @return Das Profil mit der übergebenen UUID. null, falls UUID nicht existent.
      */
     public Profil profilSuchen(UUID uuid) {
-        return profile.stream()
-                .filter(profil -> profil != null && profil.uuidStringProperty().get().compareTo(uuid.toString()) == 0)
-                .findFirst()
-                .orElse(null);
+        return profile.stream().
+                filter(profil -> Objects.equals(profil.uuidStringProperty().get(), uuid.toString())).
+                findFirst().
+                orElse(null);
     }
 
     /**
@@ -104,6 +104,7 @@ public class Partnervermittlung {
                 .findFirst();
         if (profil.isPresent()) {
             profile.remove(profil.get());
+
             return true;
         } else {
             return false;
@@ -117,17 +118,16 @@ public class Partnervermittlung {
      * @return Die Profile als String. null, falls keine Profile vorhanden
      */
     public String gibProfileAlsString() {
-        String profileText = "";
-        //Jedes Profil zum Rueckgabestring hinzufuegen
-        //alternative Implementierung der Methode:
+        StringBuilder stringBuilder = new StringBuilder();
+
         int i = 1;
         for (Profil profil : profile) {
             if (profil != null) {
-                profileText += (i++) + ": \n" + profil + "\n";
+                stringBuilder.append(i++).append(": \n").append(profil).append("\n");
             }
-        } //for
+        }
 
-        return profileText.equals("") ? null : profileText;
+        return stringBuilder.toString();
     }
 
     /**
@@ -181,7 +181,7 @@ public class Partnervermittlung {
      * @return true, falls Speicherung erfolgreich, false sonst
      */
     public boolean profileSpeichern() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(profileDatei))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(PROFILE_DATEI))) {
             for (Profil profil : profile) {
                 writer.write(profil.uuidStringProperty().get() + "\n");
                 writer.write(profil.nameProperty().get() + "\n");
@@ -208,7 +208,7 @@ public class Partnervermittlung {
      */
     public void profileLaden() {
         alleProfileLoeschen();
-        try (BufferedReader br = new BufferedReader(new FileReader(profileDatei))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(PROFILE_DATEI))) {
             while (br.ready()) {
                 profile.add(new Profil(UUID.fromString(br.readLine()), br.readLine(),
                         LocalDate.parse(br.readLine(), DateTimeFormatter.ofPattern("yyyy-MM-dd")),
